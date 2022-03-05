@@ -1,0 +1,46 @@
+---
+# tasks file for sshd
+
+- name: Update sshd configuration file
+  ansible.builtin.template:
+    src=sshd_config.j2
+    dest=/etc/ssh/sshd_config
+    backup=yes
+    owner=0 group=0 mode=0644
+    validate='/usr/sbin/sshd -T -f %s'
+  notify:
+    - restart_sshd
+
+- name: Install firewalld
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Start and enable firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- block:
+  - name: Setup selinux for alternate SSH port
+    seport:
+      ports: "{{ ssh_port }}"
+      proto: "tcp"
+      setype: "ssh_port_t"
+      state: "present"
+
+  - name: Update firewalld for alternate SSH port
+    ansible.posix.firewalld:
+      port: "{{ ssh_port }}/tcp"
+      permanent: yes
+      state: enabled
+    notify:
+      - restart_firewalld
+
+  - name: Disable the default SSH port
+    ansible.posix.firewalld:
+      service: ssh
+      permanent: yes
+      state: disabled
+  when: ssh_port != 22

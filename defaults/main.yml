@@ -1,0 +1,5 @@
+---
+# defaults file for sshd
+ssh_port: 22
+ssh_pwd_auth_local_network:
+ssh_last_login: true

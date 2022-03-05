@@ -1,0 +1,21 @@
+#{{ ansible_managed }}
+{% if ssh_port != "22" %}
+Port {{ ssh_port }}
+{% else %}
+Port 22
+{% endif %}
+PermitRootLogin no
+AuthorizedKeysFile .ssh/authorized_keys /etc/ssh/authorized_keys/%u
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+UsePAM yes
+Subsystem sftp internal-sftp
+{% if not ssh_last_login %}
+PrintLastLog no
+{% endif %}
+
+{% if ssh_pwd_auth_local_network %}
+# Allow password auth from local network
+Match Address {{ ssh_pwd_auth_local_network }}
+  PasswordAuthentication yes
+{% endif %}
